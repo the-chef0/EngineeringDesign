@@ -19,11 +19,11 @@ int16_t  x1, y1;
 uint16_t w, h;
 int prevSecond;
 
-int scheduleYears[] =  {21, 21, 21, 21, 21};
-int scheduleMonths[] = {10, 10, 10, 10, 10};
-int scheduleDays[] =   {10, 10, 10, 10, 10};
-int scheduleHours[] =  {15, 15, 15, 15, 15};
-int scheduleMinutes[] = {30, 35, 40, 45, 50};
+int scheduleYears[] =  {21, 21};
+int scheduleMonths[] = {10, 10};
+int scheduleDays[] =   {10, 10};
+int scheduleHours[] =  {15, 15};
+int scheduleMinutes[] = {45, 50};
 int counter = 0;
 bool doseAvailable = false;
 
@@ -37,20 +37,8 @@ void setup() {
 
   tft.begin(identifier);
   tft.setRotation(3);
-  tft.setFont(&FreeSans18pt7b);
 
   nfc.begin();
-  uint32_t versiondata = nfc.getFirmwareVersion();
-  if (! versiondata) {
-    Serial.print("Didn't find PN53x board");
-    while (1); // halt
-  }
-
-  Serial.print("Found chip PN5"); Serial.println((versiondata >> 24) & 0xFF, HEX);
-  Serial.print("Firmware ver. "); Serial.print((versiondata >> 16) & 0xFF, DEC);
-  Serial.print('.'); Serial.println((versiondata >> 8) & 0xFF, DEC);
-
-  // configure board to read RFID tags
   nfc.SAMConfig();
 }
 
@@ -107,24 +95,21 @@ void loop() {
     }
 
     String timeString = cntdwnHoursStr + ":" + cntdwnMinutesStr + ":" + cntdwnSecondsStr;
-    updateDisplay(tft,timeString);
+    updateTime(tft,timeString);
     prevSecond = currSecond;
   }
 
   uint8_t success;
-  uint8_t uid[] = { 0, 0, 0, 0, 0, 0, 0 };  // Buffer to store the returned UID
+  uint8_t uid[] = { 0, 0, 0, 0, 0, 0, 0 };
   uint8_t uidLength;
-  success = nfc.readPassiveTargetID(PN532_MIFARE_ISO14443A, uid, &uidLength, 50);
+  success = nfc.readPassiveTargetID(PN532_MIFARE_ISO14443A, uid, &uidLength, 50);j
 
   if (success) {
     if (doseAvailable) {
-      Serial.println("Dispensed.");
-      delay(500);
       rotate();
       doseAvailable = false;
     }
     else {
-      Serial.println("Next dose not available yet.");
     }
   }
 }
@@ -135,17 +120,22 @@ void rotate() {
   servo1.write(90);
 }
 
-void updateDisplay(MCUFRIEND_kbv screen, String string) {
+void updateTime(MCUFRIEND_kbv screen, String string) {
   screen.fillScreen(0x0);
   screen.getTextBounds(string, 0, 0, &x1, &y1, &w, &h);
-  screen.setCursor(getCursorX(), getCursorY());
+  //tft.setFont(&FreeSans12pt7b);
+  //screen.setCursor(getCenterX(),getCenterY()-30);
+  //screen.println("Next dose in:");
+  
+  tft.setFont(&FreeSans18pt7b);
+  screen.setCursor(getCenterX(), getCenterY());
   screen.println(string);
 }
 
-int getCursorX() {
+int getCenterX() {
   return (screenWidth - w) / 2;
 }
 
-int getCursorY() {
+int getCenterY() {
   return (screenHeight / 2) + (h / 2);
 }
